@@ -1,0 +1,44 @@
+﻿{% extends 'admin/base_admin.html' %}
+{% block title %}{{ title }} | VoltCart Admin{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 p-4 bg-white mb-4" style="max-width: 600px;">
+  <form method="POST">
+    {{ form.hidden_tag() }}
+
+    <div class="mb-3">
+      <label class="form-label fw-bold small">Category Name</label>
+      {{ form.name(class="form-control rounded-3", placeholder="e.g. Gaming & Consoles") }}
+      {% for err in form.name.errors %}<div class="text-danger small">{{ err }}</div>{% endfor %}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-bold small">Slug (Optional)</label>
+      {{ form.slug(class="form-control rounded-3", placeholder="e.g. gaming-consoles (auto-generated if blank)") }}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-bold small">FontAwesome Icon Class</label>
+      {{ form.icon_class(class="form-control rounded-3", placeholder="e.g. fa-solid fa-gamepad") }}
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-bold small">Category Image URL</label>
+      {{ form.image_url(class="form-control rounded-3", placeholder="https://images.unsplash.com/...") }}
+    </div>
+
+    <div class="mb-4">
+      <label class="form-label fw-bold small">Short Description</label>
+      {{ form.description(class="form-control rounded-3", rows=3, placeholder="Brief overview of items in this category...") }}
+    </div>
+
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary rounded-pill px-4 fw-bold">
+        <i class="fa-solid fa-floppy-disk me-2"></i> Save Category
+      </button>
+      <a href="{{ url_for('admin_categories') }}" class="btn btn-outline-secondary rounded-pill px-4">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

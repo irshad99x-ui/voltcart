@@ -1,0 +1,214 @@
+﻿{% extends 'base.html' %}
+{% block title %}Shop Electronics Catalog | VoltCart{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Breadcrumb & Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+    <div>
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1 small">
+          <li class="breadcrumb-item"><a href="{{ url_for('index') }}" class="text-decoration-none">Home</a></li>
+          <li class="breadcrumb-item active" aria-current="page">
+            {% if selected_category %}{{ selected_category.name }}{% else %}All Products{% endif %}
+          </li>
+        </ol>
+      </nav>
+      <h2 class="fw-bold m-0">
+        {% if selected_category %}{{ selected_category.name }}{% elif query %}Search: "{{ query }}"{% else %}Explore Electronics{% endif %}
+      </h2>
+      <small class="text-muted">Showing {{ pagination.total }} available items</small>
+    </div>
+
+    <!-- Sorting Dropdown -->
+    <div class="d-flex align-items-center gap-2">
+      <label class="small fw-semibold text-muted text-nowrap">Sort By:</label>
+      <form method="GET" action="{{ url_for('catalog') }}" id="sortForm" class="m-0">
+        {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+        {% if selected_category %}<input type="hidden" name="category" value="{{ selected_category.slug }}">{% endif %}
+        {% if selected_brand %}<input type="hidden" name="brand" value="{{ selected_brand }}">{% endif %}
+        {% if min_price %}<input type="hidden" name="min_price" value="{{ min_price }}">{% endif %}
+        {% if max_price %}<input type="hidden" name="max_price" value="{{ max_price }}">{% endif %}
+        {% if in_stock_only %}<input type="hidden" name="in_stock" value="true">{% endif %}
+
+        <select name="sort" class="form-select form-select-sm rounded-pill" onchange="document.getElementById('sortForm').submit()">
+          <option value="featured" {% if current_sort == 'featured' %}selected{% endif %}>Featured</option>
+          <option value="newest" {% if current_sort == 'newest' %}selected{% endif %}>Newest Drops</option>
+          <option value="price_asc" {% if current_sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+          <option value="price_desc" {% if current_sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+          <option value="rating" {% if current_sort == 'rating' %}selected{% endif %}>Highest Rated</option>
+        </select>
+      </form>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <!-- Filter Sidebar -->
+    <div class="col-lg-3">
+      <div class="card border-0 shadow-sm rounded-4 p-3 mb-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h6 class="fw-bold m-0"><i class="fa-solid fa-sliders text-primary me-2"></i> Filters</h6>
+          <a href="{{ url_for('catalog') }}" class="small text-muted text-decoration-none">Reset All</a>
+        </div>
+
+        <form method="GET" action="{{ url_for('catalog') }}">
+          {% if query %}<input type="hidden" name="q" value="{{ query }}">{% endif %}
+          {% if current_sort %}<input type="hidden" name="sort" value="{{ current_sort }}">{% endif %}
+
+          <!-- Categories Accordion -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-uppercase text-muted">Category</label>
+            <div class="d-flex flex-column gap-1">
+              <a href="{{ url_for('catalog', q=query, sort=current_sort) }}" class="text-decoration-none small py-1 px-2 rounded-2 {% if not selected_category %}bg-primary text-white fw-bold{% else %}text-secondary{% endif %}">
+                All Categories
+              </a>
+              {% for cat in categories %}
+                <a href="{{ url_for('catalog', category=cat.slug, q=query, sort=current_sort) }}" class="text-decoration-none small py-1 px-2 rounded-2 d-flex justify-content-between align-items-center {% if selected_category and selected_category.slug == cat.slug %}bg-primary text-white fw-bold{% else %}text-secondary{% endif %}">
+                  <span><i class="{{ cat.icon_class }} me-1"></i> {{ cat.name }}</span>
+                  <span class="badge {% if selected_category and selected_category.slug == cat.slug %}bg-light text-dark{% else %}bg-light text-muted{% endif %} rounded-pill">{{ cat.product_count }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- Price Range Filter -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-uppercase text-muted">Price Range ($)</label>
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="number" name="min_price" class="form-control form-control-sm rounded-3" placeholder="Min" value="{{ min_price or '' }}">
+              </div>
+              <div class="col-6">
+                <input type="number" name="max_price" class="form-control form-control-sm rounded-3" placeholder="Max" value="{{ max_price or '' }}">
+              </div>
+            </div>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- Brand Filter -->
+          <div class="mb-3">
+            <label class="form-label fw-bold small text-uppercase text-muted">Brand</label>
+            <select name="brand" class="form-select form-select-sm rounded-3">
+              <option value="">All Brands</option>
+              {% for b in brands %}
+                <option value="{{ b }}" {% if selected_brand == b %}selected{% endif %}>{{ b }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <hr class="my-3">
+
+          <!-- In Stock Checkbox -->
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" name="in_stock" id="inStockCheck" value="true" {% if in_stock_only %}checked{% endif %}>
+            <label class="form-check-label small fw-semibold" for="inStockCheck">
+              In Stock Only
+            </label>
+          </div>
+
+          <button type="submit" class="btn btn-primary btn-sm w-100 rounded-pill fw-semibold">
+            Apply Filters
+          </button>
+        </form>
+      </div>
+    </div>
+    <!-- Products Grid & Results -->
+    <div class="col-lg-9">
+      {% if products %}
+        <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-4 mb-4">
+          {% for prod in products %}
+          <div class="col">
+            <div class="product-card">
+              <div class="product-img-wrapper">
+                <img src="{{ prod.primary_image }}" alt="{{ prod.name }}">
+                <div class="product-badges">
+                  {% if prod.is_on_sale and prod.discount_percent > 0 %}
+                    <span class="badge bg-danger fw-bold">-{{ prod.discount_percent }}%</span>
+                  {% elif prod.is_featured %}
+                    <span class="badge bg-primary fw-bold">Featured</span>
+                  {% elif prod.is_trending %}
+                    <span class="badge bg-success fw-bold">Trending</span>
+                  {% endif %}
+                </div>
+                {% if current_user.is_authenticated %}
+                  <button class="wishlist-btn-card btn-toggle-wishlist" data-product-id="{{ prod.id }}" title="Wishlist">
+                    <i class="fa-regular fa-heart"></i>
+                  </button>
+                {% endif %}
+              </div>
+              <div class="product-info">
+                <span class="product-brand">{{ prod.brand }}</span>
+                <a href="{{ url_for('product_detail', slug=prod.slug) }}" class="product-title">{{ prod.name }}</a>
+                <div class="product-rating">
+                  <i class="fa-solid fa-star"></i>
+                  <span>{{ prod.rating_avg }}</span>
+                  <span class="text-muted">({{ prod.rating_count }})</span>
+                </div>
+                <div class="product-price-row">
+                  <div>
+                    <span class="current-price">{{ prod.price|currency }}</span>
+                    {% if prod.original_price %}
+                      <span class="original-price">{{ prod.original_price|currency }}</span>
+                    {% endif %}
+                  </div>
+                  {% if prod.in_stock %}
+                    <button class="add-cart-btn btn-add-to-cart" data-product-id="{{ prod.id }}">
+                      <i class="fa-solid fa-cart-plus"></i> Add
+                    </button>
+                  {% else %}
+                    <span class="badge bg-secondary">Sold Out</span>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <!-- Pagination Controls -->
+        {% if pagination.pages > 1 %}
+        <nav aria-label="Page navigation" class="d-flex justify-content-center mt-4">
+          <ul class="pagination">
+            <li class="page-item {% if not pagination.has_prev %}disabled{% endif %}">
+              <a class="page-link rounded-circle mx-1" href="{{ url_for('catalog', page=pagination.prev_num, q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, in_stock=in_stock_only, sort=current_sort) }}">
+                <i class="fa-solid fa-chevron-left"></i>
+              </a>
+            </li>
+            {% for p in pagination.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+              {% if p %}
+                <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                  <a class="page-link rounded-circle mx-1" href="{{ url_for('catalog', page=p, q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, in_stock=in_stock_only, sort=current_sort) }}">{{ p }}</a>
+                </li>
+              {% else %}
+                <li class="page-item disabled"><span class="page-link">...</span></li>
+              {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not pagination.has_next %}disabled{% endif %}">
+              <a class="page-link rounded-circle mx-1" href="{{ url_for('catalog', page=pagination.next_num, q=query, category=selected_category.slug if selected_category else '', brand=selected_brand, min_price=min_price, max_price=max_price, in_stock=in_stock_only, sort=current_sort) }}">
+                <i class="fa-solid fa-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+        {% endif %}
+
+      {% else %}
+        <!-- Empty State -->
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center">
+          <div class="py-4">
+            <i class="fa-solid fa-microchip fs-1 text-muted mb-3"></i>
+            <h4 class="fw-bold">No Products Found</h4>
+            <p class="text-muted mx-auto" style="max-width: 420px;">We couldn't find any electronics matching your selected search or filter criteria. Try adjusting your filters or browsing all categories.</p>
+            <a href="{{ url_for('catalog') }}" class="btn btn-primary rounded-pill px-4 py-2 mt-2">
+              <i class="fa-solid fa-rotate-left me-2"></i> Clear All Filters
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

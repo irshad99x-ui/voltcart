@@ -1,0 +1,88 @@
+﻿{% extends 'admin/base_admin.html' %}
+{% block title %}Orders Management | VoltCart Admin{% endblock %}
+{% block page_title %}Customer Orders & Tracking{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+  <!-- Filter Header -->
+  <div class="card-header bg-white border-0 pt-4 px-4 pb-3">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+      <!-- Status Tabs -->
+      <div class="d-flex gap-1 overflow-x-auto">
+        <a href="{{ url_for('admin_orders', status='all') }}" class="btn btn-sm rounded-pill px-3 {% if current_status == 'all' or not current_status %}btn-primary{% else %}btn-outline-secondary{% endif %}">All</a>
+        <a href="{{ url_for('admin_orders', status='Pending') }}" class="btn btn-sm rounded-pill px-3 {% if current_status == 'Pending' %}btn-warning{% else %}btn-outline-secondary{% endif %}">Pending</a>
+        <a href="{{ url_for('admin_orders', status='Processing') }}" class="btn btn-sm rounded-pill px-3 {% if current_status == 'Processing' %}btn-info text-white{% else %}btn-outline-secondary{% endif %}">Processing</a>
+        <a href="{{ url_for('admin_orders', status='Shipped') }}" class="btn btn-sm rounded-pill px-3 {% if current_status == 'Shipped' %}btn-primary{% else %}btn-outline-secondary{% endif %}">Shipped</a>
+        <a href="{{ url_for('admin_orders', status='Delivered') }}" class="btn btn-sm rounded-pill px-3 {% if current_status == 'Delivered' %}btn-success{% else %}btn-outline-secondary{% endif %}">Delivered</a>
+        <a href="{{ url_for('admin_orders', status='Cancelled') }}" class="btn btn-sm rounded-pill px-3 {% if current_status == 'Cancelled' %}btn-danger{% else %}btn-outline-secondary{% endif %}">Cancelled</a>
+      </div>
+
+      <!-- Search -->
+      <form method="GET" action="{{ url_for('admin_orders') }}" class="d-flex gap-2">
+        {% if current_status %}<input type="hidden" name="status" value="{{ current_status }}">{% endif %}
+        <input type="text" name="q" class="form-control form-control-sm rounded-pill" placeholder="Order # or customer name..." value="{{ search }}">
+        <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3">Search</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle m-0 admin-table">
+      <thead>
+        <tr>
+          <th class="ps-4">Order #</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Order Status</th>
+          <th>Payment</th>
+          <th class="text-end pe-4">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ord in orders %}
+        <tr>
+          <td class="ps-4 fw-bold">
+            <a href="{{ url_for('admin_order_detail', id=ord.id) }}" class="text-primary text-decoration-none">{{ ord.order_number }}</a>
+          </td>
+          <td>
+            <div class="fw-semibold">{{ ord.customer_name }}</div>
+            <small class="text-muted">{{ ord.email }}</small>
+          </td>
+          <td class="text-muted small">{{ ord.created_at.strftime('%b %d, %Y') }}</td>
+          <td><span class="badge bg-light text-dark border">{{ ord.items|length }} item(s)</span></td>
+          <td class="fw-bold">{{ ord.total_amount|currency }}</td>
+          <td><span class="badge bg-{{ ord.status_badge_class }}">{{ ord.order_status }}</span></td>
+          <td><span class="badge bg-{{ ord.payment_badge_class }}">{{ ord.payment_status }} ({{ ord.payment_method }})</span></td>
+          <td class="text-end pe-4">
+            <a href="{{ url_for('admin_order_detail', id=ord.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+              <i class="fa-solid fa-eye me-1"></i> Manage
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  {% if pagination.pages > 1 %}
+  <div class="card-footer bg-white border-0 py-3">
+    <nav class="d-flex justify-content-center">
+      <ul class="pagination pagination-sm m-0">
+        {% for p in pagination.iter_pages() %}
+          {% if p %}
+            <li class="page-item {% if p == pagination.page %}active{% endif %}">
+              <a class="page-link" href="{{ url_for('admin_orders', page=p, status=current_status, q=search) }}">{{ p }}</a>
+            </li>
+          {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+          {% endif %}
+        {% endfor %}
+      </ul>
+    </nav>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,141 @@
+{% extends 'base.html' %}
+{% block title %}Shopping Cart | VoltCart{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+  <h2 class="fw-bold mb-4"><i class="fa-solid fa-cart-shopping text-primary me-2"></i> Your Shopping Cart</h2>
+
+  {% if cart_data.cart_items %}
+    <div class="row g-4">
+      <!-- Items Table -->
+      <div class="col-lg-8">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+          <div class="table-responsive">
+            <table class="table table-align-middle m-0">
+              <thead class="table-light">
+                <tr>
+                  <th scope="col" class="ps-4">Product</th>
+                  <th scope="col">Price</th>
+                  <th scope="col" class="text-center">Quantity</th>
+                  <th scope="col">Subtotal</th>
+                  <th scope="col" class="text-end pe-4">Action</th>
+                </tr>
+              </thead>
+              <tbody id="cart-table-body">
+                {% for item in cart_data.cart_items %}
+                <tr id="cart-row-{{ item.id }}">
+                  <td class="ps-4 py-3">
+                    <div class="d-flex align-items-center gap-3">
+                      <img src="{{ item.product.primary_image }}" alt="{{ item.product.name }}" width="64" height="64" class="rounded-3 border object-fit-cover">
+                      <div>
+                        <a href="{{ url_for('product_detail', slug=item.product.slug) }}" class="fw-bold text-dark text-decoration-none d-block">{{ item.product.name }}</a>
+                        <small class="text-muted">{{ item.product.brand }} • SKU: {{ item.product.sku }}</small>
+                      </div>
+                    </div>
+                  </td>
+                  <td>{{ item.product.price|currency }}</td>
+                  <td class="text-center">
+                    <div class="input-group input-group-sm mx-auto" style="max-width: 110px;">
+                      <button class="btn btn-outline-secondary cart-qty-btn" data-item-id="{{ item.id }}" data-action="decrease" type="button">-</button>
+                      <input type="number" id="cart-qty-{{ item.id }}" class="form-control text-center fw-bold cart-qty-input" data-item-id="{{ item.id }}" value="{{ item.quantity }}" min="1" max="{{ item.product.stock_quantity }}">
+                      <button class="btn btn-outline-secondary cart-qty-btn" data-item-id="{{ item.id }}" data-action="increase" type="button">+</button>
+                    </div>
+                  </td>
+                  <td class="fw-bold text-secondary" id="item-subtotal-{{ item.id }}">{{ item.subtotal|currency }}</td>
+                  <td class="text-end pe-4">
+                    <button class="btn btn-sm btn-outline-danger rounded-circle cart-remove-btn" data-item-id="{{ item.id }}" title="Remove item">
+                      <i class="fa-solid fa-trash-can"></i>
+                    </button>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <a href="{{ url_for('catalog') }}" class="btn btn-outline-secondary rounded-pill px-4">
+            <i class="fa-solid fa-arrow-left me-2"></i> Continue Shopping
+          </a>
+        </div>
+      </div>
+
+      <!-- Order Summary Column -->
+      <div class="col-lg-4">
+        <!-- Coupon Form Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-3 mb-3">
+          <label class="form-label fw-bold small text-muted text-uppercase mb-2">Have a Promo Coupon?</label>
+          <form method="POST" action="{{ url_for('apply_coupon') }}" class="d-flex gap-2">
+            {{ coupon_form.hidden_tag() }}
+            {{ coupon_form.code(class="form-control form-control-sm rounded-pill text-uppercase", placeholder="e.g. WELCOME10") }}
+            {{ coupon_form.submit(class="btn btn-dark btn-sm rounded-pill px-3") }}
+          </form>
+          {% if session.get('applied_coupon') %}
+            <div class="d-flex justify-content-between align-items-center mt-2 p-2 bg-success-subtle rounded-3 small text-success">
+              <span><i class="fa-solid fa-tag me-1"></i> <strong>{{ session.get('applied_coupon') }}</strong> applied</span>
+              <form method="POST" action="{{ url_for('remove_coupon') }}" class="m-0">
+                <button type="submit" class="btn btn-link btn-sm p-0 text-danger text-decoration-none">Remove</button>
+              </form>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Order Summary Card -->
+        <div class="card border-0 shadow-sm rounded-4 p-4">
+          <h5 class="fw-bold mb-3">Order Summary</h5>
+
+          <div class="d-flex justify-content-between py-2 border-bottom small">
+            <span class="text-muted">Subtotal ({{ cart_data.item_count }} items)</span>
+            <span class="fw-semibold" id="cart-subtotal">{{ cart_data.subtotal|currency }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between py-2 border-bottom small">
+            <span class="text-muted">Shipping (Standard)</span>
+            <span class="fw-semibold text-success" id="cart-shipping">
+              {% if cart_data.shipping_fee == 0 %}FREE{% else %}{{ cart_data.shipping_fee|currency }}{% endif %}
+            </span>
+          </div>
+
+          {% if cart_data.discount_amount > 0 %}
+          <div class="d-flex justify-content-between py-2 border-bottom small text-success">
+            <span>Coupon Discount</span>
+            <span class="fw-bold" id="cart-discount">-{{ cart_data.discount_amount|currency }}</span>
+          </div>
+          {% endif %}
+
+          <div class="d-flex justify-content-between py-2 border-bottom small">
+            <span class="text-muted">Estimated Tax (8%)</span>
+            <span class="fw-semibold" id="cart-tax">{{ cart_data.tax_amount|currency }}</span>
+          </div>
+
+          <div class="d-flex justify-content-between pt-3 mb-4">
+            <span class="fs-5 fw-bold">Grand Total</span>
+            <span class="fs-5 fw-black text-primary" id="cart-total">{{ cart_data.total_amount|currency }}</span>
+          </div>
+
+          <a href="{{ url_for('checkout') }}" class="btn btn-primary btn-lg w-100 rounded-pill fw-bold shadow-sm mb-3">
+            <i class="fa-solid fa-lock me-2"></i> Proceed to Checkout
+          </a>
+
+          <div class="text-center small text-muted">
+            <i class="fa-solid fa-handshake-angle text-success me-1"></i> Cash on Delivery available!
+          </div>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <!-- Empty Cart -->
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+      <div class="py-4">
+        <i class="fa-solid fa-cart-arrow-down fs-1 text-muted mb-3"></i>
+        <h4 class="fw-bold mb-2">Your Shopping Cart is Empty</h4>
+        <p class="text-muted mx-auto mb-4" style="max-width: 420px;">You haven't added any electronics to your cart yet. Explore our latest flagship devices and upgrade your setup.</p>
+        <a href="{{ url_for('catalog') }}" class="btn btn-primary rounded-pill px-4 py-2">
+          <i class="fa-solid fa-bag-shopping me-2"></i> Start Shopping
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

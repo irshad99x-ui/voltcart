@@ -1,0 +1,71 @@
+﻿{% extends 'base.html' %}
+{% block title %}My Wishlist | VoltCart{% endblock %}
+
+{% block content %}
+<div class="container py-2">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+      <h2 class="fw-bold m-0"><i class="fa-solid fa-heart text-danger me-2"></i> My Wishlist</h2>
+      <small class="text-muted">{{ items|length }} saved items</small>
+    </div>
+    <a href="{{ url_for('catalog') }}" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-arrow-left me-1"></i> Continue Shopping
+    </a>
+  </div>
+
+  {% if items %}
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+      {% for item in items %}
+      <div class="col">
+        <div class="product-card h-100">
+          <div class="product-img-wrapper">
+            <img src="{{ item.product.primary_image }}" alt="{{ item.product.name }}">
+            {% if item.product.discount_percent > 0 %}
+              <div class="product-badges">
+                <span class="badge bg-danger fw-bold">-{{ item.product.discount_percent }}%</span>
+              </div>
+            {% endif %}
+          </div>
+          <div class="product-info">
+            <span class="product-brand">{{ item.product.brand }}</span>
+            <a href="{{ url_for('product_detail', slug=item.product.slug) }}" class="product-title">{{ item.product.name }}</a>
+            <div class="product-rating">
+              <i class="fa-solid fa-star"></i>
+              <span>{{ item.product.rating_avg }}</span>
+              <span class="text-muted">({{ item.product.rating_count }})</span>
+            </div>
+            <div class="product-price-row mb-3">
+              <span class="current-price">{{ item.product.price|currency }}</span>
+            </div>
+
+            <div class="d-flex gap-2">
+              <form method="POST" action="{{ url_for('wishlist_move_to_cart', product_id=item.product.id) }}" class="flex-grow-1 m-0">
+                <button type="submit" class="btn btn-primary btn-sm rounded-pill w-100 fw-semibold">
+                  <i class="fa-solid fa-cart-plus me-1"></i> Move to Cart
+                </button>
+              </form>
+              <form method="POST" action="{{ url_for('wishlist_remove', product_id=item.product.id) }}" class="m-0">
+                <button type="submit" class="btn btn-outline-danger btn-sm rounded-circle p-2" title="Remove">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+      <div class="py-4">
+        <i class="fa-regular fa-heart fs-1 text-muted mb-3"></i>
+        <h4 class="fw-bold mb-2">Your Wishlist is Empty</h4>
+        <p class="text-muted mx-auto mb-4" style="max-width: 420px;">Save products you love by clicking the heart icon on any product page or catalog card.</p>
+        <a href="{{ url_for('catalog') }}" class="btn btn-primary rounded-pill px-4 py-2">
+          <i class="fa-solid fa-bag-shopping me-2"></i> Explore Products
+        </a>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

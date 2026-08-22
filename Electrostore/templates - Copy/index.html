@@ -1,0 +1,301 @@
+﻿{% extends 'base.html' %}
+{% block title %}VoltCart - High Performance Electronics & Tech Hardware{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Hero Section -->
+  <section class="hero-section mb-5 shadow-lg">
+    <div class="row align-items-center">
+      <div class="col-lg-7 py-3">
+        <span class="badge bg-primary px-3 py-2 text-uppercase fw-bold rounded-pill mb-3">
+          <i class="fa-solid fa-bolt me-1"></i> 2026 Tech Collection
+        </span>
+        <h1 class="display-4 fw-black text-white mb-3" style="letter-spacing: -1px;">
+          Next-Gen Electronics. <br><span class="text-info">Engineered for Power.</span>
+        </h1>
+        <p class="lead text-light opacity-75 mb-4" style="max-width: 520px;">
+          Experience flagship mobile phones, high-speed workstations, spatial audio systems, and curved OLED displays with verified fast delivery.
+        </p>
+        <div class="d-flex flex-wrap gap-3">
+          <a href="{{ url_for('catalog') }}" class="btn btn-primary btn-lg rounded-pill px-4 fw-bold">
+            <i class="fa-solid fa-bag-shopping me-2"></i> Explore Store
+          </a>
+          <a href="{{ url_for('catalog', category='gaming-consoles') }}" class="btn btn-outline-light btn-lg rounded-pill px-4 fw-semibold">
+            <i class="fa-solid fa-gamepad me-2"></i> Gaming Zone
+          </a>
+        </div>
+      </div>
+      <div class="col-lg-5 d-none d-lg-block text-center position-relative">
+        <img src="https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?w=600&auto=format&fit=crop&q=80" class="img-fluid rounded-4 shadow-lg border border-secondary" style="max-height: 380px; object-fit: cover;" alt="VoltCart Flagship Product">
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Showcase Grid -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold m-0">Browse by Category</h3>
+        <p class="text-muted small m-0">Find the exact hardware ecosystem for your setup</p>
+      </div>
+      <a href="{{ url_for('catalog') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All <i class="fa-solid fa-arrow-right ms-1"></i></a>
+    </div>
+
+    <div class="row row-cols-2 row-cols-md-4 g-3">
+      {% for cat in categories %}
+      <div class="col">
+        <a href="{{ url_for('catalog', category=cat.slug) }}" class="category-card h-100">
+          <div class="icon-box">
+            <i class="{{ cat.icon_class }}"></i>
+          </div>
+          <h6 class="fw-bold mb-1">{{ cat.name }}</h6>
+          <small class="text-muted">{{ cat.product_count }} items</small>
+        </a>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Flash Deals Section with Live Countdown -->
+  {% if sale_products %}
+  <section class="mb-5 p-4 rounded-4 bg-light border border-warning-subtle shadow-sm">
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+      <div class="d-flex align-items-center gap-3">
+        <div class="badge bg-danger p-2 fs-6 rounded-3"><i class="fa-solid fa-fire-flame-curved"></i> FLASH DEALS</div>
+        <div>
+          <h4 class="fw-bold m-0">Limited-Time Discounts</h4>
+          <span class="text-muted small">Special pricing ending soon</span>
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2 bg-white px-3 py-2 rounded-pill border shadow-sm" id="deal-countdown">
+        <span class="small fw-semibold text-muted">Ends In:</span>
+        <span class="badge bg-dark fs-6" id="cd-hours">18</span> :
+        <span class="badge bg-dark fs-6" id="cd-mins">45</span> :
+        <span class="badge bg-dark fs-6" id="cd-secs">00</span>
+      </div>
+    </div>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+      {% for prod in sale_products %}
+      <div class="col">
+        <div class="product-card">
+          <div class="product-img-wrapper">
+            <img src="{{ prod.primary_image }}" alt="{{ prod.name }}">
+            <div class="product-badges">
+              {% if prod.discount_percent > 0 %}
+                <span class="badge bg-danger fw-bold">{{ prod.discount_percent }}% OFF</span>
+              {% endif %}
+              <span class="badge bg-warning text-dark fw-bold">Deal</span>
+            </div>
+            {% if current_user.is_authenticated %}
+              <button class="wishlist-btn-card btn-toggle-wishlist" data-product-id="{{ prod.id }}" title="Wishlist">
+                <i class="fa-regular fa-heart"></i>
+              </button>
+            {% endif %}
+          </div>
+          <div class="product-info">
+            <span class="product-brand">{{ prod.brand }}</span>
+            <a href="{{ url_for('product_detail', slug=prod.slug) }}" class="product-title">{{ prod.name }}</a>
+            <div class="product-rating">
+              <i class="fa-solid fa-star"></i>
+              <span>{{ prod.rating_avg }}</span>
+              <span class="text-muted">({{ prod.rating_count }})</span>
+            </div>
+            <div class="product-price-row">
+              <div>
+                <span class="current-price">{{ prod.price|currency }}</span>
+                {% if prod.original_price %}
+                  <span class="original-price">{{ prod.original_price|currency }}</span>
+                {% endif %}
+              </div>
+              <button class="add-cart-btn btn-add-to-cart" data-product-id="{{ prod.id }}">
+                <i class="fa-solid fa-cart-plus"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+  <!-- Featured Products -->
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold m-0">Featured Electronics</h3>
+        <p class="text-muted small m-0">Handpicked flagship equipment and workstations</p>
+      </div>
+      <a href="{{ url_for('catalog') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+    </div>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+      {% for prod in featured_products %}
+      <div class="col">
+        <div class="product-card">
+          <div class="product-img-wrapper">
+            <img src="{{ prod.primary_image }}" alt="{{ prod.name }}">
+            <div class="product-badges">
+              <span class="badge bg-primary fw-bold">Featured</span>
+              {% if prod.discount_percent > 0 %}
+                <span class="badge bg-danger fw-bold">-{{ prod.discount_percent }}%</span>
+              {% endif %}
+            </div>
+            {% if current_user.is_authenticated %}
+              <button class="wishlist-btn-card btn-toggle-wishlist" data-product-id="{{ prod.id }}" title="Wishlist">
+                <i class="fa-regular fa-heart"></i>
+              </button>
+            {% endif %}
+          </div>
+          <div class="product-info">
+            <span class="product-brand">{{ prod.brand }}</span>
+            <a href="{{ url_for('product_detail', slug=prod.slug) }}" class="product-title">{{ prod.name }}</a>
+            <div class="product-rating">
+              <i class="fa-solid fa-star"></i>
+              <span>{{ prod.rating_avg }}</span>
+              <span class="text-muted">({{ prod.rating_count }})</span>
+            </div>
+            <div class="product-price-row">
+              <div>
+                <span class="current-price">{{ prod.price|currency }}</span>
+                {% if prod.original_price %}
+                  <span class="original-price">{{ prod.original_price|currency }}</span>
+                {% endif %}
+              </div>
+              <button class="add-cart-btn btn-add-to-cart" data-product-id="{{ prod.id }}">
+                <i class="fa-solid fa-cart-plus"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+
+  <!-- Promo Dual Banners -->
+  <section class="mb-5">
+    <div class="row g-4">
+      <div class="col-md-6">
+        <div class="p-4 p-lg-5 rounded-4 text-white d-flex flex-column justify-content-between h-100 shadow-sm" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); min-height: 220px;">
+          <div>
+            <span class="badge bg-info text-dark mb-2">Creator Edition</span>
+            <h4 class="fw-bold mb-2">ZenithBook Pro & Studio PCs</h4>
+            <p class="small text-light opacity-75 mb-4">Unleash unrestricted 3D rendering and software compilation.</p>
+          </div>
+          <div>
+            <a href="{{ url_for('catalog', category='laptops-computers') }}" class="btn btn-light rounded-pill px-4 fw-bold">Shop Computers <i class="fa-solid fa-arrow-right ms-1"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <div class="p-4 p-lg-5 rounded-4 text-white d-flex flex-column justify-content-between h-100 shadow-sm" style="background: linear-gradient(135deg, #064e3b 0%, #065f46 100%); min-height: 220px;">
+          <div>
+            <span class="badge bg-warning text-dark mb-2">Audio Fidelity</span>
+            <h4 class="fw-bold mb-2">Pure Lossless Acoustics</h4>
+            <p class="small text-light opacity-75 mb-4">Adaptive ANC headphones and spatial home sound systems.</p>
+          </div>
+          <div>
+            <a href="{{ url_for('catalog', category='audio-headphones') }}" class="btn btn-light rounded-pill px-4 fw-bold">Shop Audio <i class="fa-solid fa-arrow-right ms-1"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Trending Products -->
+  {% if trending_products %}
+  <section class="mb-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <div>
+        <h3 class="fw-bold m-0">Trending Now</h3>
+        <p class="text-muted small m-0">Most popular gear requested by our tech community</p>
+      </div>
+      <a href="{{ url_for('catalog', sort='newest') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">View All</a>
+    </div>
+
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-4">
+      {% for prod in trending_products %}
+      <div class="col">
+        <div class="product-card">
+          <div class="product-img-wrapper">
+            <img src="{{ prod.primary_image }}" alt="{{ prod.name }}">
+            <div class="product-badges">
+              <span class="badge bg-success fw-bold"><i class="fa-solid fa-fire me-1"></i> Trending</span>
+            </div>
+            {% if current_user.is_authenticated %}
+              <button class="wishlist-btn-card btn-toggle-wishlist" data-product-id="{{ prod.id }}" title="Wishlist">
+                <i class="fa-regular fa-heart"></i>
+              </button>
+            {% endif %}
+          </div>
+          <div class="product-info">
+            <span class="product-brand">{{ prod.brand }}</span>
+            <a href="{{ url_for('product_detail', slug=prod.slug) }}" class="product-title">{{ prod.name }}</a>
+            <div class="product-rating">
+              <i class="fa-solid fa-star"></i>
+              <span>{{ prod.rating_avg }}</span>
+              <span class="text-muted">({{ prod.rating_count }})</span>
+            </div>
+            <div class="product-price-row">
+              <div>
+                <span class="current-price">{{ prod.price|currency }}</span>
+                {% if prod.original_price %}
+                  <span class="original-price">{{ prod.original_price|currency }}</span>
+                {% endif %}
+              </div>
+              <button class="add-cart-btn btn-add-to-cart" data-product-id="{{ prod.id }}">
+                <i class="fa-solid fa-cart-plus"></i> Add
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- Trust Features -->
+  <section class="mb-5">
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-4 g-3">
+      <div class="col">
+        <div class="feature-box h-100">
+          <i class="fa-solid fa-truck-fast"></i>
+          <div>
+            <h6 class="fw-bold mb-1">Fast Delivery</h6>
+            <small class="text-muted">Free shipping on orders over ${{ config.FREE_SHIPPING_THRESHOLD|int }}</small>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="feature-box h-100">
+          <i class="fa-solid fa-shield-halved"></i>
+          <div>
+            <h6 class="fw-bold mb-1">2-Year Warranty</h6>
+            <small class="text-muted">Full manufacturer repair coverage</small>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="feature-box h-100">
+          <i class="fa-solid fa-handshake-angle"></i>
+          <div>
+            <h6 class="fw-bold mb-1">Cash on Delivery</h6>
+            <small class="text-muted">Pay securely at your doorstep</small>
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="feature-box h-100">
+          <i class="fa-solid fa-headset"></i>
+          <div>
+            <h6 class="fw-bold mb-1">24/7 Expert Support</h6>
+            <small class="text-muted">Dedicated electronics engineers</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock %}

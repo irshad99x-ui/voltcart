@@ -1,0 +1,156 @@
+﻿{% extends 'admin/base_admin.html' %}
+{% block title %}Dashboard | VoltCart Admin{% endblock %}
+{% block page_title %}Analytics & Store Metrics{% endblock %}
+
+{% block content %}
+<!-- Top Metrics Row -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Total Revenue (COD Paid)</div>
+        <div class="stat-val text-success">{{ total_revenue|currency }}</div>
+      </div>
+      <div class="stat-icon bg-success-subtle text-success">
+        <i class="fa-solid fa-dollar-sign"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Total Orders Placed</div>
+        <div class="stat-val text-primary">{{ total_orders }}</div>
+        <small class="text-warning fw-bold">{{ pending_orders }} Pending</small>
+      </div>
+      <div class="stat-icon bg-primary-subtle text-primary">
+        <i class="fa-solid fa-receipt"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Active Catalog Items</div>
+        <div class="stat-val text-info">{{ total_products }}</div>
+      </div>
+      <div class="stat-icon bg-info-subtle text-info">
+        <i class="fa-solid fa-microchip"></i>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-xl-3">
+    <div class="stat-card">
+      <div>
+        <div class="stat-label">Registered Customers</div>
+        <div class="stat-val text-warning">{{ total_customers }}</div>
+      </div>
+      <div class="stat-icon bg-warning-subtle text-warning">
+        <i class="fa-solid fa-users"></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mb-4">
+  <!-- Chart: Inventory Distribution by Category -->
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+      <h6 class="fw-bold mb-3"><i class="fa-solid fa-chart-pie text-primary me-2"></i> Category Catalog Share</h6>
+      <div style="position: relative; height: 260px;">
+        <canvas id="categoryChart" data-labels='{{ cat_labels|safe }}' data-counts='{{ cat_counts|safe }}'></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Low Stock Alert -->
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 bg-white">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold m-0"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i> Low Stock Alerts (&le; 15 units)</h6>
+        <a href="{{ url_for('admin_products') }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">Manage Inventory</a>
+      </div>
+
+      {% if low_stock_products %}
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Product</th>
+                <th>SKU</th>
+                <th>Price</th>
+                <th class="text-center">Stock</th>
+                <th class="text-end">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for prod in low_stock_products %}
+              <tr>
+                <td class="fw-semibold small">{{ prod.name }}</td>
+                <td><code>{{ prod.sku }}</code></td>
+                <td>{{ prod.price|currency }}</td>
+                <td class="text-center">
+                  <span class="badge bg-danger rounded-pill">{{ prod.stock_quantity }} units left</span>
+                </td>
+                <td class="text-end">
+                  <a href="{{ url_for('admin_product_edit', id=prod.id) }}" class="btn btn-sm btn-outline-dark rounded-pill px-2 py-0">Edit</a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <p class="text-muted small">All products have healthy inventory levels.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Recent Orders Table -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+  <div class="card-header bg-white border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center">
+    <h6 class="fw-bold m-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Recent Customer Orders</h6>
+    <a href="{{ url_for('admin_orders') }}" class="btn btn-sm btn-primary rounded-pill px-3">View All Orders</a>
+  </div>
+  <div class="card-body p-4">
+    <div class="table-responsive">
+      <table class="table table-hover align-middle m-0">
+        <thead class="table-light">
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th class="text-end">Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in recent_orders %}
+          <tr>
+            <td class="fw-bold">
+              <a href="{{ url_for('admin_order_detail', id=order.id) }}" class="text-primary text-decoration-none">{{ order.order_number }}</a>
+            </td>
+            <td>{{ order.customer_name }}</td>
+            <td class="text-muted small">{{ order.created_at.strftime('%b %d, %Y') }}</td>
+            <td class="fw-bold">{{ order.total_amount|currency }}</td>
+            <td><span class="badge bg-{{ order.status_badge_class }}">{{ order.order_status }}</span></td>
+            <td><span class="badge bg-{{ order.payment_badge_class }}">{{ order.payment_status }} ({{ order.payment_method }})</span></td>
+            <td class="text-end">
+              <a href="{{ url_for('admin_order_detail', id=order.id) }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                <i class="fa-solid fa-eye me-1"></i> Inspect
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

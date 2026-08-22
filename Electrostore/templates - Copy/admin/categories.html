@@ -1,0 +1,58 @@
+﻿{% extends 'admin/base_admin.html' %}
+{% block title %}Category Management | VoltCart Admin{% endblock %}
+{% block page_title %}Product Categories{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+  <div class="card-header bg-white border-0 pt-4 px-4 pb-3 d-flex justify-content-between align-items-center">
+    <h6 class="fw-bold m-0"><i class="fa-solid fa-layer-group text-primary me-2"></i> All Active Categories ({{ categories|length }})</h6>
+    <a href="{{ url_for('admin_category_add') }}" class="btn btn-primary btn-sm rounded-pill px-3">
+      <i class="fa-solid fa-plus me-1"></i> Add Category
+    </a>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle m-0 admin-table">
+      <thead>
+        <tr>
+          <th class="ps-4">Icon</th>
+          <th>Category Name</th>
+          <th>Slug</th>
+          <th>Products Count</th>
+          <th>Description</th>
+          <th class="text-end pe-4">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cat in categories %}
+        <tr>
+          <td class="ps-4">
+            <div class="width-36 height-36 bg-light text-primary rounded-circle d-flex align-items-center justify-content-center" style="width:36px;height:36px;">
+              <i class="{{ cat.icon_class }}"></i>
+            </div>
+          </td>
+          <td class="fw-bold">{{ cat.name }}</td>
+          <td><code>{{ cat.slug }}</code></td>
+          <td>
+            <span class="badge bg-primary-subtle text-primary rounded-pill">{{ cat.products|length }} products</span>
+          </td>
+          <td class="text-muted small" style="max-width: 320px;">{{ cat.description or '-' }}</td>
+          <td class="text-end pe-4">
+            <div class="d-flex justify-content-end gap-2">
+              <a href="{{ url_for('admin_category_edit', id=cat.id) }}" class="btn btn-sm btn-outline-dark rounded-circle" title="Edit">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </a>
+              <form method="POST" action="{{ url_for('admin_category_delete', id=cat.id) }}" class="form-delete-confirm m-0">
+                <button type="submit" class="btn btn-sm btn-outline-danger rounded-circle" title="Delete">
+                  <i class="fa-solid fa-trash-can"></i>
+                </button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+﻿{% extends 'admin/base_admin.html' %}
+{% block title %}Customers Directory | VoltCart Admin{% endblock %}
+{% block page_title %}Customer Accounts{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white mb-4">
+  <div class="card-header bg-white border-0 pt-4 px-4 pb-3">
+    <h6 class="fw-bold m-0"><i class="fa-solid fa-users text-primary me-2"></i> Registered Customer Directory ({{ customers|length }})</h6>
+  </div>
+
+  <div class="table-responsive">
+    <table class="table table-hover align-middle m-0 admin-table">
+      <thead>
+        <tr>
+          <th class="ps-4">Customer</th>
+          <th>Username</th>
+          <th>Contact</th>
+          <th>Location</th>
+          <th>Joined Date</th>
+          <th>Total Orders</th>
+          <th class="text-end pe-4">Total Spent</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for cust in customers %}
+        <tr>
+          <td class="ps-4">
+            <div class="d-flex align-items-center gap-2">
+              <div class="width-36 height-36 bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width:36px;height:36px;">
+                {{ (cust.full_name or cust.username)[0]|upper }}
+              </div>
+              <div>
+                <div class="fw-bold">{{ cust.full_name or 'N/A' }}</div>
+                <small class="text-muted">{{ cust.email }}</small>
+              </div>
+            </div>
+          </td>
+          <td><code>@{{ cust.username }}</code></td>
+          <td class="small">{{ cust.phone or 'No phone' }}</td>
+          <td class="small text-muted">{{ cust.city or '' }}{% if cust.city and cust.state %}, {% endif %}{{ cust.state or 'Not specified' }}</td>
+          <td class="small text-muted">{{ cust.created_at.strftime('%b %d, %Y') }}</td>
+          <td>
+            <span class="badge bg-light text-dark border">{{ cust.orders|length }} order(s)</span>
+          </td>
+          <td class="text-end pe-4 fw-bold text-success">
+            {{ cust.orders|sum(attribute='total_amount')|currency }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
